@@ -1,100 +1,46 @@
-require('dotenv').config();
-const { ApolloServer } = require('@apollo/server');
-const { startStandaloneServer } = require('@apollo/server/standalone');
-const pool = require('./db');
+const path = require("path");
+const fs = require("fs");
+const express = require("express");
+const cors = require("cors");
+const { ApolloServer } = require("@apollo/server");
+const { expressMiddleware } = require("@apollo/server/express4");
+const db = require("./db");
+require("dotenv").config();
 
-const typeDefs = `#graphql
-  type Author {
-    id: ID!
-    name: String!
-    country: String
-    books: [Book!]!
-  }
-  type Book {
-    id: ID!
-    title: String!
-    year: Int
-    author: Author!
-  }
-  type Query {
-    authors: [Author!]!
-    author(id: ID!): Author
-    books(year: Int): [Book!]!
-  }
-  type Mutation {
-    addBook(title: String!, year: Int, authorId: ID!): Book!
-    deleteBook(id: ID!): Boolean!
-  }
-`;
-
+const typeDefs = fs.readFileSync(path.join(__dirname, "schema.graphql"), "utf8");
 const resolvers = {
   Query: {
-    authors: async () => {
-      const [rows] = await pool.query('SELECT id, name, country FROM authors ORDER BY name');
-      return rows;
+    dishes: async () => {
+      const [rows] = await db.execute("SELECT id, name, price, available FROM dishes ORDER BY id");
+      return rows.map(r => ({ ...r, available: Boolean(r.available) }));
     },
-    author: async (_parent, { id }) => {
-      const [rows] = await pool.query('SELECT id, name, country FROM authors WHERE id = ?', [id]);
-      return rows[0] || null;
-    },
-    books: async (_parent, { year }) => {
-      const sql = year == null
-        ? 'SELECT id, title, year, author_id FROM books ORDER BY title'
-        : 'SELECT id, title, year, author_id FROM books WHERE year = ? ORDER BY title';
-      const [rows] = year == null ? await pool.query(sql) : await pool.query(sql, [year]);
-      return rows;
-    }
-  },
-  Author: {
-    books: async author => {
-      const [rows] = await pool.query(
-        'SELECT id, title, year, author_id FROM books WHERE author_id = ? ORDER BY title', [author.id]
-      );
-      return rows;
-    }
-  },
-  Book: {
-    author: async book => {
-      const [rows] = await pool.query('SELECT id, name, country FROM authors WHERE id = ?', [book.author_id]);
-      if (!rows[0]) throw new Error('Author for this book was not found.');
-      return rows[0];
+    dish: async (_, { id }) => {
+      const [rows] = await db.execute("SELECT id, name, price, available FROM dishes WHERE id = ?", [id]);
+      return rows.length ? { ...rows[0], available: Boolean(rows[0].available) } : null;
     }
   },
   Mutation: {
-    addBook: async (_parent, { title, year, authorId }) => {
-      const cleanTitle = title.trim();
-      if (!cleanTitle) throw new Error('Book title cannot be empty.');
-      const [authors] = await pool.query('SELECT id FROM authors WHERE id = ?', [authorId]);
-      if (!authors.length) throw new Error('The selected author does not exist.');
-      const [result] = await pool.query(
-        'INSERT INTO books (title, year, author_id) VALUES (?, ?, ?)',
-        [cleanTitle, year ?? null, authorId]
+    addDish: async (_, { input }) => {
+      const available = input.available === undefined ? true : input.available;
+      const [result] = await db.execute(
+        "INSERT INTO dishes (name, price, available) VALUES (?, ?, ?)",
+        [input.name, input.price, available]
       );
-      const [rows] = await pool.query(
-        'SELECT id, title, year, author_id FROM books WHERE id = ?', [result.insertId]
+      const [rows] = await db.execute(
+        "SELECT id, name, price, available FROM dishes WHERE id = ?", [result.insertId]
       );
-      return rows[0];
-    },
-    deleteBook: async (_parent, { id }) => {
-      const [result] = await pool.query('DELETE FROM books WHERE id = ?', [id]);
-      return result.affectedRows > 0;
+      return { ...rows[0], available: Boolean(rows[0].available) };
     }
   }
 };
-
 async function start() {
-  const server = new ApolloServer({ typeDefs, resolvers });
+  const app = express();
+  app.use(cors());
+  app.use(express.static(path.join(__dirname, "public")));
+  const apollo = new ApolloServer({ typeDefs, resolvers });
+  await apollo.start();
+  app.use("/graphql", express.json(), expressMiddleware(apollo));
   const port = Number(process.env.PORT || 4000);
-  const { url } = await startStandaloneServer(server, {
-    listen: { port },
-    cors: {
-      origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
-      credentials: false
-    }
-  });
-  console.log(`Campus Library GraphQL API ready at ${url}`);
+  app.listen(port, () => console.log(`CampusEats running at http://localhost:${port} (GraphQL: /graphql)`));
 }
-start().catch(error => {
-  console.error('Could not start GraphQL API:', error.message);
-  process.exit(1);
-});
+start().catch(err => { console.error(err); process.exit(1); });

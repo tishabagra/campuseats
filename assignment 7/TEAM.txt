@@ -1,6 +1,1 @@
-Team ID: 21
-Member 1: 20251651097 — Tisha Bagra
-Member 2: 20251651045 — Ishu Rajput
-Member 3: 20251651051 — Komal
-Member 4: 20251651103 — Vinita Rathore
-Member 5: 20251651080 — Rupini C Bhojannavar
+Group ID 21\n20251651097 - Tisha Bagra\n20251651045 - Ishu Rajput\n20251651051 - Komal\n20251651103 - Vinita Rathore\n20251651080 - Rupini C Bhojannavar\n

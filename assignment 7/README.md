@@ -1,77 +1,51 @@
-# Campus Library — GraphQL + Node.js + MySQL
+# CampusEats GraphQL — Dishes Service
+**CS543 · Web Services · Assignment 7 of 12**
 
-A small full-stack GraphQL application. The browser queries authors and nested books through Apollo Server, and a form adds books to MySQL.
+## Which CampusEats service did you pick?
+We picked the **Menu/Dishes service**. It lists campus food dishes and allows a user to add a dish.
 
-## Requirements
-- Node.js 18+
-- MySQL 8 or compatible MariaDB
-- VS Code with Live Server extension
+## Name one field a client can skip and one it cannot. Why use `!`?
+A client can skip `available` in a selection set if it does not need the status. It cannot omit `name` from `AddDishInput`, because `name: String!` is required. GraphQL's `!` means non-null: a required input must be supplied and a non-null output must not resolve to null.
 
-## Setup
-1. Start MySQL.
-2. Run `schema.sql` in MySQL Workbench/phpMyAdmin, or from a terminal:
-   ```bash
-   mysql -u root -p < schema.sql
-   ```
-3. Copy `.env.example` to `.env` and set your actual MySQL password/port.
-   Windows PowerShell: `Copy-Item .env.example .env`
-4. Install dependencies and start the API:
-   ```bash
-   npm install
-   npm start
-   ```
-   API and Apollo Sandbox: `http://localhost:4000/`
-5. In VS Code, right-click `public/index.html` and select **Open with Live Server**. The configured origin is normally `http://127.0.0.1:5500`.
+## Map the GraphQL operation to SQL.
+For `dish(id: ID!)`, the resolver maps the supplied `id` to SQL `WHERE id = ?`. The `addDish` mutation resolver runs `INSERT INTO dishes (name, price, available) VALUES (?, ?, ?)`.
 
-If MySQL uses port 3307, set `DB_PORT=3307` in `.env`. Never commit `.env`.
+## Team — Group ID 21
+| Roll number | Name |
+|---|---|
+| 20251651097 | Tisha Bagra |
+| 20251651045 | Ishu Rajput |
+| 20251651051 | Komal |
+| 20251651103 | Vinita Rathore |
+| 20251651080 | Rupini C Bhojannavar |
 
-## Test query
+## Run the project
+Requirements: Node.js 18+ and MySQL.
+
+1. Open this folder in VS Code.
+2. Run `schema.sql` in MySQL Workbench or phpMyAdmin. It creates the database and seeds four dishes.
+3. Copy `.env.example` to `.env` and set your MySQL credentials.
+4. In the project terminal run `npm install`, then `npm start`.
+5. Open **http://localhost:4000**. The page uses `fetch()` to query `/graphql` and submit the `addDish` mutation.
+
+### Example query
 ```graphql
-query {
-  authors {
-    id
-    name
-    country
-    books { id title year }
-  }
-}
+query { dishes { id name price available } }
 ```
 
-## Test mutation
+### Example mutation
 ```graphql
-mutation {
-  addBook(title: "GraphQL for Beginners", year: 2025, authorId: "2") {
-    id
-    title
-    year
-    author { name }
-  }
-}
+mutation { addDish(input: { name: "Paneer Roll", price: 90 }) { id name price } }
 ```
 
-Filter books:
-```graphql
-query { books(year: 2023) { title year author { name } } }
-```
+## Submission checklist
+- Before screenshot: start the app and capture the initial four dishes.
+- Add `Paneer Roll` with price `90`.
+- After screenshot: capture the list showing the newly added dish.
+- Record a short demo video showing the page and mutation; upload the video and two screenshots to Google Drive.
+- Push the folder to your team's GitHub repository and add links below.
 
-Delete a book:
-```graphql
-mutation { deleteBook(id: "1") }
-```
+GitHub repository: **[Add your team repository URL]**  
+Google Drive demo and screenshots: **[Add your share link]**
 
-## Troubleshooting
-- `Access denied`: verify DB_USER, DB_PASSWORD and DB_PORT in `.env`.
-- `ECONNREFUSED`: start MySQL and check its port.
-- Browser connection/CORS error: ensure API runs on port 4000 and Live Server uses `localhost:5500` or `127.0.0.1:5500`. Add a different Live Server origin to the CORS list in `server.js` if needed.
-- PowerShell blocks npm scripts: use `npm.cmd install` and `npm.cmd start`.
-
-## Team details
-Team ID: 21
-
-| Member | Roll number | Name |
-|---|---|---|
-| 1 | 20251651097 | Tisha Bagra |
-| 2 | 20251651045 | Ishu Rajput |
-| 3 | 20251651051 | Komal |
-| 4 | 20251651103 | Vinita Rathore |
-| 5 | 20251651080 | Rupini C Bhojannavar |
+Note: The project files are supplied here; you must run them locally, verify your MySQL credentials, take the actual screenshots, record the video, and upload those deliverables.
