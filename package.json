@@ -1,0 +1,14 @@
+{
+  "name": "campus-library-graphql",
+  "version": "1.0.0",
+  "description": "Campus Library GraphQL API with Node.js, Apollo Server, and MySQL",
+  "main": "server.js",
+  "scripts": {"start": "node server.js", "dev": "node --watch server.js"},
+  "engines": {"node": ">=18"},
+  "dependencies": {
+    "@apollo/server": "^4.12.2",
+    "dotenv": "^16.4.7",
+    "graphql": "^16.10.0",
+    "mysql2": "^3.12.0"
+  }
+}

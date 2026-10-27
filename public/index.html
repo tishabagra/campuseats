@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campus Library | GraphQL Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="header-inner">
+  <div class="eyebrow">GraphQL · Node.js · MySQL</div>
+  <h1>Campus Library</h1>
+  <p>Explore authors and the books they have written.</p>
+</div></header>
+<main>
+  <div class="toolbar">
+    <div><h2>Authors &amp; books</h2><div id="status" role="status">Connecting to GraphQL API…</div></div>
+    <button id="refreshBtn" type="button">Refresh library</button>
+  </div>
+  <section id="authorList" class="author-grid" aria-live="polite"><div class="panel">Loading library…</div></section>
+  <section class="panel">
+    <h2>Add a book</h2><p>Choose an author and save a new book to MySQL.</p>
+    <form id="addForm">
+      <label>Book title<input id="title" name="title" maxlength="200" placeholder="e.g. GraphQL for Beginners" required></label>
+      <label>Publication year<input id="year" name="year" type="number" min="0" max="9999" placeholder="2025"></label>
+      <label>Author<select id="authorId" name="authorId" required><option value="">Loading authors…</option></select></label>
+      <button id="submitBtn" type="submit">Add book</button>
+    </form>
+    <div id="formMessage" class="message" role="status"></div>
+  </section>
+</main>
+<footer>Campus Library · GraphQL query and mutation demonstration</footer>
+<script>
+const API = 'http://localhost:4000/';
+async function gql(query, variables = {}) {
+  const response = await fetch(API, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','Accept':'application/json'},
+    body: JSON.stringify({query, variables})
+  });
+  const payload = await response.json();
+  if (!response.ok || payload.errors) throw new Error(payload.errors?.map(e => e.message).join('; ') || `HTTP ${response.status}`);
+  return payload.data;
+}
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function showMessage(message, type='') {
+  const box = document.getElementById('formMessage');
+  box.textContent = message; box.className = `message ${type}`;
+}
+async function loadAuthors() {
+  const status = document.getElementById('status'), list = document.getElementById('authorList');
+  status.textContent = 'Loading authors and books…';
+  try {
+    const data = await gql(`query LibraryAuthors { authors { id name country books { id title year } } }`);
+    list.innerHTML = data.authors.map(author => `
+      <article class="author-card"><h3>${escapeHtml(author.name)}</h3>
+      <div class="country">${escapeHtml(author.country || 'Country not specified')}</div>
+      <div class="book-list">${author.books.length
+        ? author.books.map(book => `<div class="book"><span>${escapeHtml(book.title)}</span><span class="year">${book.year ?? 'Year N/A'}</span></div>`).join('')
+        : '<div class="empty">No books added yet.</div>'}</div></article>`).join('') || '<div class="panel">No authors found.</div>';
+    const select = document.getElementById('authorId'), previous = select.value;
+    select.innerHTML = '<option value="">Select an author</option>' + data.authors.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join('');
+    if (data.authors.some(a => String(a.id) === previous)) select.value = previous;
+    status.textContent = `${data.authors.length} author(s) loaded`;
+  } catch (error) {
+    list.innerHTML = '<div class="panel">Could not load the library. Check that MySQL and the GraphQL API are running.</div>';
+    status.textContent = 'Connection failed'; showMessage(error.message, 'error');
+  }
+}
+document.getElementById('refreshBtn').addEventListener('click', loadAuthors);
+document.getElementById('addForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const title = document.getElementById('title').value.trim();
+  const yearValue = document.getElementById('year').value;
+  const authorId = document.getElementById('authorId').value;
+  if (!title || !authorId) { showMessage('Enter a title and select an author.', 'error'); return; }
+  const button = document.getElementById('submitBtn'); button.disabled = true; showMessage('Saving book…');
+  try {
+    await gql(`mutation AddBook($title:String!,$year:Int,$authorId:ID!) {
+      addBook(title:$title,year:$year,authorId:$authorId) { id title }
+    }`, {title, year:yearValue ? Number(yearValue) : null, authorId});
+    event.target.reset(); showMessage('Book added successfully!', 'success'); await loadAuthors();
+  } catch (error) { showMessage(`Could not add book: ${error.message}`, 'error'); }
+  finally { button.disabled = false; }
+});
+loadAuthors();
+</script>
+</body>
+</html>
