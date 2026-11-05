@@ -1,18 +1,26 @@
-CampusEats Catalogue Service – Assignment 8
-Tisha Bagra – 20251651097
-Ishu Rajput – 20251651045
-Komal – 20251651051
-Rupini C Bhojannavar – 20251651080
-Vinita Rathore – 20251651103
+CampusEats Catalogue Service â€“ Assignment 8
+
 
 How to Run:
 Open the project folder in the terminal and execute npm install followed by npm start. Open http://localhost:3000 in your browser.
 1. Which CampusEats service did you pick, and what are its routes?
 I selected the Catalogue (Menu Items) Service. It manages food menu items.   
-HTTP Method  RouteDescriptionGET/itemsGet all menu items
-GET/items/:idGet a menu item by ID
-POST/itemsAdd a new menu item
-
+HTTP Method  
+Route
+Description
+GET
+/items
+Get all menu items
+
+GET
+/items/:id
+Get a menu item by ID
+
+POST
+/items
+Add a new menu item
+
+
 2. Which status codes did you return, and for which outcomes?
 200 OK: When menu items are successfully retrieved.
 201 Created: When a new menu item is successfully added.
