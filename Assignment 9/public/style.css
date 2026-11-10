@@ -1,0 +1,312 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f3f8;
+    color: #1b1b2f;
+}
+
+.topbar {
+    background: #ffffff;
+    padding: 1.2rem 6%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dce1eb;
+}
+
+.topbar h1 {
+    color: #2e6f9e;
+    margin: 0;
+}
+
+.sub {
+    color: #687386;
+    margin: 5px 0 0;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#roleLabel {
+    color: #2e6f9e;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.container {
+    width: min(1050px, 92%);
+    margin: 30px auto;
+}
+
+.panel {
+    background: white;
+    border: 1px solid #dce1eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 22px;
+    box-shadow: 0 3px 12px rgba(30, 50, 80, 0.04);
+}
+
+h2 {
+    margin-top: 0;
+    color: #244f70;
+}
+
+h3 {
+    color: #e8541e;
+}
+
+.muted {
+    color: #687386;
+}
+
+.login-panel {
+    max-width: 480px;
+    margin: 45px auto;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+input {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #c9ced9;
+    border-radius: 7px;
+    font-size: 15px;
+}
+
+input:focus {
+    outline: 2px solid #b6d7ed;
+    border-color: #2e6f9e;
+}
+
+button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.primary-btn {
+    background: #2e6f9e;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #245879;
+}
+
+.secondary-btn {
+    background: #e8f1f7;
+    color: #245879;
+}
+
+.logout-btn {
+    background: #fce8e4;
+    color: #b83d24;
+}
+
+.full-btn {
+    width: 100%;
+    margin-top: 12px;
+}
+
+.demo-accounts {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f5f7fb;
+    border-radius: 8px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.demo-accounts h3 {
+    margin-top: 0;
+}
+
+.demo-accounts p {
+    margin: 8px 0;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.section-heading h2 {
+    margin-bottom: 5px;
+}
+
+.section-heading p {
+    margin-top: 0;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.dish {
+    background: #fbfcfe;
+    border: 1px solid #dce1eb;
+    border-left: 5px solid #1b998b;
+    border-radius: 9px;
+    padding: 16px;
+}
+
+.dish-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+}
+
+.dish-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.dish-price {
+    color: #2e6f9e;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.delete-btn {
+    margin-top: 13px;
+    background: #fce8e4;
+    color: #b83d24;
+}
+
+.add-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+    gap: 12px;
+}
+
+.add-form button {
+    height: 40px;
+}
+
+.order-card {
+    border: 1px solid #dce1eb;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 12px;
+    background: #fbfcfe;
+}
+
+.order-card p {
+    margin: 6px 0;
+}
+
+.order-lookup {
+    border-top: 1px solid #e2e5ed;
+    margin-top: 22px;
+    padding-top: 15px;
+}
+
+.order-lookup form {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.order-lookup input {
+    max-width: 250px;
+}
+
+.message {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+}
+
+.message.success {
+    background: #e5f5ed;
+    color: #17633d;
+}
+
+.message.error {
+    background: #fce8e4;
+    color: #a52e1b;
+}
+
+.message.info {
+    background: #e8f1f7;
+    color: #245879;
+}
+
+.empty {
+    color: #687386;
+    padding: 15px 0;
+}
+
+.hidden {
+    display: none !important;
+}
+
+footer {
+    text-align: center;
+    color: #778092;
+    padding: 20px;
+    font-size: 13px;
+}
+
+@media (max-width: 650px) {
+    .topbar {
+        padding: 18px 4%;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .user-info {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    .add-form {
+        grid-template-columns: 1fr;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+    }
+
+    .order-lookup form {
+        flex-direction: column;
+    }
+
+    .order-lookup input {
+        max-width: none;
+    }
+}
