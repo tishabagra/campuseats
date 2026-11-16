@@ -1,0 +1,132 @@
+CampusEats Assignment 5 — curl -v transcript
+
+Run first:
+  node mock_payment.js
+  set PAYMENT_SERVICE_URL=http://localhost:4000/payments
+  npm start
+
+The following requests were captured against the local service. Server-generated Date/Server headers can differ by runtime.
+
+============================================================
+1) CREATE — 201 + Location
+============================================================
+> POST /orders HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+> Content-Type: application/json
+> Idempotency-Key: curl-demo-001
+>
+> {"userId":1,"items":[{"menuItemId":10,"quantity":2}],"total":120}
+< HTTP/1.1 201 Created
+< Content-Type: application/json; charset=utf-8
+< Location: /orders/1
+< X-RateLimit-Limit: 100
+< X-RateLimit-Remaining: 99
+< X-Content-Type-Options: nosniff
+< Strict-Transport-Security: max-age=31536000; includeSubDomains
+< Access-Control-Allow-Origin: *
+<
+< {"id":1,"userId":1,"items":[{"menuItemId":10,"quantity":2}],"total":120,"status":"PENDING","paymentId":"PAY-1"}
+
+============================================================
+2) SAME CREATE + SAME IDEMPOTENCY KEY — original result
+============================================================
+> POST /orders HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+> Content-Type: application/json
+> Idempotency-Key: curl-demo-001
+>
+> {"userId":1,"items":[{"menuItemId":10,"quantity":2}],"total":120}
+< HTTP/1.1 201 Created
+< Location: /orders/1
+<
+< {"id":1,"userId":1,"items":[{"menuItemId":10,"quantity":2}],"total":120,"status":"PENDING","paymentId":"PAY-1"}
+
+============================================================
+3) CONDITIONAL GET — 304
+============================================================
+First GET:
+> GET /orders/1 HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+< HTTP/1.1 200 OK
+< ETag: "<copy-the-real-etag-from-this-response>"
+< Cache-Control: public, max-age=30, must-revalidate
+<
+
+Second GET using that exact ETag:
+> GET /orders/1 HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+> If-None-Match: "<same-etag>"
+< HTTP/1.1 304 Not Modified
+< ETag: "<same-etag>"
+<
+
+============================================================
+4) CONDITIONAL WRITE — 412
+============================================================
+> POST /orders/1/cancellation HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+> Content-Type: application/json
+> Authorization: Bearer demo-token
+> If-Match: "stale-etag"
+>
+> {"reason":"changed my order"}
+< HTTP/1.1 412 Precondition Failed
+< Content-Type: application/json; charset=utf-8
+<
+< {"type":"https://campuseats.example/problems/412","title":"Precondition Failed","status":412,"detail":"The order changed since it was read. Refresh before retrying."}
+
+============================================================
+5) 400 — malformed request
+============================================================
+> POST /orders HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+> Content-Type: application/json
+>
+> {"userId":-1}
+< HTTP/1.1 400 Bad Request
+< Content-Type: application/json; charset=utf-8
+<
+< {"type":"https://campuseats.example/problems/400","title":"Malformed request body","status":400,"detail":"userId must be a positive integer"}
+
+============================================================
+6) 404 — missing resource
+============================================================
+> GET /orders/999999 HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+< HTTP/1.1 404 Not Found
+< Content-Type: application/json; charset=utf-8
+<
+< {"type":"https://campuseats.example/problems/404","title":"Order not found","status":404,"detail":"No order exists with id 999999"}
+
+============================================================
+7) 401 — missing token
+============================================================
+> POST /orders/1/cancellation HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+> Content-Type: application/json
+> If-Match: "anything"
+>
+> {}
+< HTTP/1.1 401 Unauthorized
+< Content-Type: application/json; charset=utf-8
+<
+< {"type":"https://campuseats.example/problems/401","title":"Unauthorized","status":401,"detail":"Authorization: Bearer <token> is required."}
+
+============================================================
+8) 406 — unsupported Accept
+============================================================
+> GET /orders HTTP/1.1
+> Host: localhost:3000
+> Accept: text/xml
+< HTTP/1.1 406 Not Acceptable
+< Content-Type: application/json; charset=utf-8
+<
+< {"type":"https://campuseats.example/problems/406","title":"Not Acceptable","status":406,"detail":"This service returns application/json only."}
