@@ -1,0 +1,119 @@
+============================================================
+1) SUCCESS CREATION (POST /orders -> 201 Created + Location)
+============================================================
+$ curl -i -X POST http://localhost:3000/orders \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"userId":1,"address":"Hostel A","items":[{"menuItemId":10,"quantity":2}],"total":120}'
+
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=utf-8
+Location: /orders/1
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 99
+X-Content-Type-Options: nosniff
+
+{"id":1,"userId":1,"address":"Hostel A","items":[{"menuItemId":10,"quantity":2}],"total":120,"status":"PENDING","paymentId":"PAY-1"}
+
+============================================================
+2) FAILURE: FIELD-LEVEL VALIDATION ERRORS (422)
+============================================================
+$ curl -i -X POST http://localhost:3000/orders \
+  -H "Content-Type: application/json" \
+  -d '{"userId":1,"items":[{"menuItemId":10,"quantity":0}]}'
+
+HTTP/1.1 422 Unprocessable Content
+Content-Type: application/problem+json; charset=utf-8
+
+{
+  "type": "validation-failed",
+  "title": "Validation failed",
+  "status": 422,
+  "detail": "The request body contained invalid or missing fields.",
+  "errors": [
+    { "field": "address", "msg": "required" },
+    { "field": "items[0].quantity", "msg": "must be an integer >= 1" }
+  ]
+}
+
+============================================================
+3) FAILURE: ITEM UNAVAILABLE / SOLD OUT (422)
+============================================================
+$ curl -i -X POST http://localhost:3000/orders \
+  -H "Content-Type: application/json" \
+  -d '{"userId":1,"address":"Hostel A","items":[{"menuItemId":999,"quantity":1}],"total":50}'
+
+HTTP/1.1 422 Unprocessable Content
+Content-Type: application/problem+json; charset=utf-8
+
+{
+  "type": "item-unavailable",
+  "title": "That item is sold out",
+  "status": 422,
+  "detail": "Paneer Roll is unavailable today"
+}
+
+============================================================
+4) FAILURE: UNKNOWN ORDER ID (GET /orders/9999 -> 404)
+============================================================
+$ curl -i -X GET http://localhost:3000/orders/9999 \
+  -H "Accept: application/json"
+
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json; charset=utf-8
+
+{
+  "type": "order-not-found",
+  "title": "Order not found",
+  "status": 404,
+  "detail": "No order exists with id 9999"
+}
+
+============================================================
+5) FAILURE: ILLEGAL TRANSITION (PATCH /orders/1 -> 409)
+============================================================
+$ curl -i -X PATCH http://localhost:3000/orders/1 \
+  -H "Content-Type: application/json" \
+  -d '{"status":"DELIVERED"}'
+
+$ curl -i -X PATCH http://localhost:3000/orders/1 \
+  -H "Content-Type: application/json" \
+  -d '{"status":"CANCELLED"}'
+
+HTTP/1.1 409 Conflict
+Content-Type: application/problem+json; charset=utf-8
+
+{
+  "type": "illegal-transition",
+  "title": "Illegal state transition",
+  "status": 409,
+  "detail": "Cannot modify an order that has already been delivered."
+}
+
+============================================================
+6) CONTENT NEGOTIATION: XML FORMAT (Accept: application/xml)
+============================================================
+$ curl -i -X GET http://localhost:3000/orders/1 \
+  -H "Accept: application/xml"
+
+HTTP/1.1 200 OK
+Content-Type: application/xml; charset=utf-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+<order><id>1</id><userId>1</userId><address>Hostel A</address><items>[{"menuItemId":10,"quantity":2}]</items><total>120</total><status>DELIVERED</status></order>
+
+============================================================
+7) CONTENT NEGOTIATION FAILURE (Accept: image/png -> 406)
+============================================================
+$ curl -i -X GET http://localhost:3000/orders/1 \
+  -H "Accept: image/png"
+
+HTTP/1.1 406 Not Acceptable
+Content-Type: application/problem+json; charset=utf-8
+
+{
+  "type": "not-acceptable",
+  "title": "Not Acceptable",
+  "status": 406,
+  "detail": "The requested media type is not supported. Use application/json or application/xml."
+}

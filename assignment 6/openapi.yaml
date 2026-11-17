@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: CampusEats Orders Service - Assignment 6
+  version: 3.0.0
+  description: Honest responses, error cataloging, and request validation for CampusEats.
+servers:
+  - url: http://localhost:3000
+paths:
+  /orders:
+    post:
+      summary: Place an order
+      parameters:
+        - $ref: '#/components/parameters/Accept'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateOrderRequest'}
+      responses:
+        '201':
+          description: Order created successfully
+          headers:
+            Location: {schema: {type: string}, description: '/orders/{id}'}
+          content:
+            application/json: {schema: {$ref: '#/components/schemas/Order'}}
+            application/xml: {schema: {$ref: '#/components/schemas/Order'}}
+        '422':
+          description: Validation failure or unprocessable entity
+          content:
+            application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}
+        '429':
+          description: Rate limit exceeded
+          headers:
+            Retry-After: {schema: {type: string}}
+          content:
+            application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}
+        '503':
+          description: Payment service unavailable
+          headers:
+            Retry-After: {schema: {type: string}}
+          content:
+            application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}
+
+  /orders/{id}:
+    get:
+      summary: Read an order
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+        - $ref: '#/components/parameters/Accept'
+      responses:
+        '200':
+          description: Order found
+          headers:
+            ETag: {schema: {type: string}}
+          content:
+            application/json: {schema: {$ref: '#/components/schemas/Order'}}
+            application/xml: {schema: {$ref: '#/components/schemas/Order'}}
+        '404':
+          description: Order not found
+          content:
+            application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}
+        '406':
+          description: Media type not acceptable
+          content:
+            application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}
+
+    patch:
+      summary: Update order status
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: {type: string}
+      responses:
+        '200':
+          description: Status updated
+        '409':
+          description: Illegal status transition
+          content:
+            application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}
+
+    delete:
+      summary: Cancel or delete draft order
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+        - $ref: '#/components/parameters/Authorization'
+      responses:
+        '204':
+          description: Order deleted (No Content)
+        '404':
+          description: Order not found
+        '409':
+          description: Illegal state transition
+
+components:
+  parameters:
+    OrderId:
+      name: id
+      in: path
+      required: true
+      schema: {type: integer}
+    Authorization:
+      name: Authorization
+      in: header
+      required: true
+      schema: {type: string}
+    Accept:
+      name: Accept
+      in: header
+      required: false
+      schema: {type: string}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: {type: string}
+
+  schemas:
+    CreateOrderRequest:
+      type: object
+      required: [userId, address, items, total]
+      properties:
+        userId: {type: integer, minimum: 1}
+        address: {type: string, minLength: 1}
+        items:
+          type: array
+          minItems: 1
+          items: {$ref: '#/components/schemas/OrderItem'}
+        total: {type: number, exclusiveMinimum: 0}
+
+    OrderItem:
+      type: object
+      required: [menuItemId, quantity]
+      properties:
+        menuItemId: {type: integer, minimum: 1}
+        quantity: {type: integer, minimum: 1}
+
+    Order:
+      type: object
+      properties:
+        id: {type: integer}
+        userId: {type: integer}
+        address: {type: string}
+        items: {type: array, items: {$ref: '#/components/schemas/OrderItem'}}
+        total: {type: number}
+        status: {type: string}
+
+    Problem:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type: {type: string}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: {type: string}
+              msg: {type: string}
